@@ -19,7 +19,7 @@ environment:
       # Break the tests into two runs, since together they exceed the 1 hour limit.
       # See https://github.com/pyinstaller/pyinstaller/issues/2024#issuecomment-224129520
       # for more discussion.
-      TEST1_CMD: "python pywin32_testall.py"
+      TEST1_CMD: "py.test"
 
     - PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5"
@@ -28,13 +28,13 @@ environment:
       # Break the tests into two runs, since together they exceed the 1 hour limit.
       # See https://github.com/pyinstaller/pyinstaller/issues/2024#issuecomment-224129520
       # for more discussion.
-      TEST1_CMD: "python pywin32_testall.py"
+      TEST1_CMD: "py.test"
 
     - PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6"
       PYTHON_ARCH: "32"
       VCVARSALL: "x86"
-      TEST1_CMD: "python pywin32_testall.py"
+      TEST1_CMD: "py.test"
 
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6"
@@ -43,11 +43,10 @@ environment:
       # Break the tests into two runs, since together they exceed the 1 hour limit.
       # See https://github.com/pyinstaller/pyinstaller/issues/2024#issuecomment-224129520
       # for more discussion.
-      TEST1_CMD: "python pywin32_testall.py"
+      TEST1_CMD: "py.test"
 
 matrix:
-  allow_failures:
-    - PYTHON_VERSION: "3.6"
+  fast_finish: true
 
 cache:
   # Cache downloaded pip packages.
@@ -79,8 +78,9 @@ install:
       %CMD_IN_ENV% pip install -U --disable-pip-version-check --timeout 5 --retries 2 -r tests/requirements-win32.txt
     ) ELSE (
       %CMD_IN_ENV% pip install -U --disable-pip-version-check --timeout 5 --retries 2 -r tests/requirements-win.txt )"
-  # Install into virtualenv.
-  - "%CMD_IN_ENV% pip install -e ."
+
+  - "%CMD_IN_ENV% python setup.py bdist_wheel"
+  - "%CMD_IN_ENV% python tests/scripts/install_wheels.py dist"
 
 build: none
 
@@ -88,3 +88,10 @@ test_script:
   # Run the tests appropriate for this entry in the test matrix. Skip tests
   # if we're just updating the cache.
   - "if not \"%APPVEYOR_SCHEDULED_BUILD%\" == \"True\" (%CMD_IN_ENV% %TEST1_CMD% )"
+
+artifacts:
+  - path: '**\*.whl'
+
+on_finish:
+  # - "python .\\tests\\scripts\\list_sitepackages.py"
+  - ps: (new-object net.webclient).UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\junit-results.xml))
