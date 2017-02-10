@@ -498,17 +498,11 @@ class my_build_ext(build_ext):
 
     def finalize_options(self):
         build_ext.finalize_options(self)        
-        for ext in self.extensions:
-            if isinstance(ext, WinExt_Executable):
-                ext._file_name = os.path.splitext(ext._file_name)[0]
 
         self.windows_h_version = None
         # The pywintypes library is created in the build_temp
         # directory, so we need to add this to library_dirs
         self.library_dirs.append(self.build_temp)
-        self.mingw32 = (self.compiler == "mingw32")
-        if self.mingw32:
-            self.libraries.append("stdc++")
 
         self.excluded_extensions = []  # list of (ext, why)
         self.swig_cpp = True  # hrm - deprecated - should use swig_opts=-c++??
