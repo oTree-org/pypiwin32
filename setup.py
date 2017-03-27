@@ -637,6 +637,8 @@ class my_build_ext(build_ext):
 
         if name in ['perfmondata', 'PyISAPI_loader']:
             return name + extra_dll
+        elif name in ['pythonservice', 'Pythonwin']:
+            return name
         else:
             return build_ext.get_ext_filename(self, name)
 
